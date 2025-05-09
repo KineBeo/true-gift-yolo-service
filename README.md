@@ -1,147 +1,53 @@
-# API Phân Loại Món Ăn Việt Nam với YOLO
+# YOLO Vietnamese Food Classification Microservice
 
-Một microservice FastAPI cho việc phân loại hình ảnh món ăn Việt Nam sử dụng YOLOv8.
+Microservice for Vietnamese food classification using YOLOv8.
 
-## Tổng Quan
+## Features
 
-Dịch vụ này cung cấp REST API để phân loại món ăn Việt Nam sử dụng mô hình YOLOv8 đã được huấn luyện trước. Nó chấp nhận tải lên hình ảnh và trả về kết quả phân loại cùng với điểm tin cậy.
+- Fast food classification using YOLOv8
+- Simple REST API for integration
+- Supports image uploads and URL-based classification
+- Batch processing support for multiple images
+- OpenAPI documentation with Swagger UI and ReDoc
 
-## Yêu Cầu Hệ Thống
+## API Endpoints
 
-- Python 3.8+
-- fastapi
-- uvicorn
-- pillow
-- numpy
-- ultralytics (YOLOv8)
+### Main Endpoints
 
-## Cài Đặt
+- `GET /` - Basic health check
+- `GET /status` - Service status and model information
+- `POST /predict` - Upload and classify a single image
+- `POST /predict-url` - Classify an image from a URL
+- `POST /predict-batch` - Batch classify multiple images from URLs (parallel processing)
 
-1. Clone repository:
-   ```
-   git clone <repository-url>
-   cd yolo-microservice
-   ```
+### Documentation
 
-2. Tạo và kích hoạt môi trường ảo:
-   ```
-   python -m venv venv
-   source venv/bin/activate  # Trên Windows: venv\Scripts\activate
-   ```
+- `GET /docs` - Swagger UI documentation
+- `GET /redoc` - ReDoc documentation
 
-3. Cài đặt các thư viện phụ thuộc:
-   ```
-   pip install -r requirements.txt
-   ```
+## Examples
 
-4. Đặt file mô hình YOLOv8 vào thư mục `data`:
-   ```
-   mkdir -p data
-   # Đặt file mô hình "yolov8-vn-food-classification.pt" của bạn vào thư mục data
-   ```
-
-## Chạy Dịch Vụ
-
-Khởi động dịch vụ với lệnh:
-
-```
-uvicorn main:app --host 0.0.0.0 --port 8000
-```
-
-API sẽ có thể truy cập tại:
-- API: http://localhost:8000
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
-
-## Các Endpoint API
-
-### GET /
-
-Kiểm tra xem API có đang chạy không.
-
-**Phản hồi**:
-```json
-{
-  "message": "YOLO Vietnamese Food Classification API",
-  "status": "running"
-}
-```
-
-### GET /status
-
-Lấy thông tin về trạng thái API và mô hình.
-
-**Phản hồi**:
-```json
-{
-  "status": "ok",
-  "model_loaded": true,
-  "model_path": "data/yolov8-vn-food-classification.pt",
-  "model_exists": true
-}
-```
-
-### POST /predict
-
-Tải lên file hình ảnh để phân loại món ăn Việt Nam.
-
-**Yêu cầu**:
-- Form data với một file hình ảnh
-
-**Phản hồi**:
-```json
-{
-  "predictions": [
-    {
-      "class": 9,
-      "score": 0.95
-    }
-  ],
-  "processing_time": 0.542
-}
-```
-
-## Hướng Dẫn Sử Dụng Chi Tiết
-
-### 1. Chuẩn Bị Hình Ảnh
-
-Để sử dụng API, bạn cần chuẩn bị hình ảnh món ăn Việt Nam cần phân loại. Hình ảnh nên rõ ràng, có độ phân giải tốt và chứa món ăn cần phân loại ở vị trí trung tâm.
-
-### 2. Gửi Yêu Cầu Phân Loại
-
-#### Sử dụng Swagger UI
-
-1. Mở trình duyệt web và truy cập: http://localhost:8000/docs
-2. Tìm và mở rộng endpoint POST /predict
-3. Click vào nút "Try it out"
-4. Click vào nút "Choose File" để chọn hình ảnh từ máy tính của bạn
-5. Click vào nút "Execute" để gửi yêu cầu
-6. Kết quả sẽ hiển thị ở phần Response body
-
-#### Sử dụng curl
+### Single Image Prediction
 
 ```bash
-curl -X POST "http://localhost:8000/predict" \
-  -H "accept: application/json" \
-  -H "Content-Type: multipart/form-data" \
-  -F "file=@duong_dan_den_hinh_anh.jpg"
+# Upload an image file
+curl -X POST -F "file=@/path/to/your/image.jpg" http://localhost:8000/predict
+
+# Classify from URL
+curl -X POST -F "url=https://example.com/image.jpg" http://localhost:8000/predict-url
 ```
 
-#### Sử dụng Python với thư viện requests
+### Batch Prediction
 
-```python
-import requests
-
-url = "http://localhost:8000/predict"
-files = {"file": open("duong_dan_den_hinh_anh.jpg", "rb")}
-response = requests.post(url, files=files)
-predictions = response.json()
-print(predictions)
+```bash
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"urls": ["https://example.com/image1.jpg", "https://example.com/image2.jpg"], "timeout_per_image": 5.0}' \
+  http://localhost:8000/predict-batch
 ```
 
-### 3. Hiểu Kết Quả
+## Response Format
 
-Kết quả trả về sẽ có cấu trúc như sau:
+### Single Image Response
 
 ```json
 {
@@ -149,23 +55,99 @@ Kết quả trả về sẽ có cấu trúc như sau:
     {
       "class": 9,
       "score": 0.95
+    },
+    {
+      "class": 12,
+      "score": 0.03
     }
   ],
   "processing_time": 0.542
 }
 ```
 
-Trong đó:
-- `class`: ID của lớp món ăn được dự đoán
-- `score`: Điểm tin cậy của dự đoán (từ 0 đến 1, càng gần 1 càng tin cậy)
-- `processing_time`: Thời gian xử lý (tính bằng giây)
+### Batch Prediction Response
 
-### 4. Xử Lý Lỗi
+```json
+{
+  "results": {
+    "https://example.com/image1.jpg": {
+      "success": true,
+      "predictions": [
+        {"class": 9, "score": 0.95}
+      ],
+      "url": "https://example.com/image1.jpg",
+      "processing_time": 0.54
+    },
+    "https://example.com/image2.jpg": {
+      "success": true,
+      "predictions": [
+        {"class": 5, "score": 0.87}
+      ],
+      "url": "https://example.com/image2.jpg",
+      "processing_time": 0.62
+    }
+  },
+  "processing_time": 1.2,
+  "success_count": 2,
+  "error_count": 0
+}
+```
 
-Nếu gặp lỗi, API sẽ trả về thông báo lỗi với mã HTTP thích hợp:
-- 400: Lỗi yêu cầu (không có file, file không hợp lệ, v.v.)
-- 500: Lỗi máy chủ (mô hình không được tải, lỗi xử lý, v.v.)
+## Running the Service
 
-## Hỗ Trợ Docker
+### With Docker
 
-Sắp có Dockerfile để đóng gói ứng dụng này thành container. 
+```bash
+# Build the Docker image
+docker build -t yolo-food-api .
+
+# Run the Docker container
+docker run -p 8000:8000 yolo-food-api
+```
+
+### Without Docker
+
+```bash
+# Create virtual environment (optional)
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# or
+venv\Scripts\activate  # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the service
+python main.py
+```
+
+## Development
+
+### Requirements
+
+- Python 3.8+
+- FastAPI
+- Ultralytics YOLOv8
+- httpx (for URL based classification)
+
+### Model
+
+The service uses a YOLOv8 model trained on Vietnamese food images. The model file should be placed in the `data` directory with the name `yolov8-vn-food-classification.pt`.
+
+### Environment Variables
+
+- `PORT` - Port to run the service on (default: 8000)
+- `HOST` - Host to run the service on (default: 0.0.0.0)
+- `MODEL_PATH` - Path to the YOLOv8 model (default: data/yolov8-vn-food-classification.pt)
+
+## Class Mapping
+
+The model returns class IDs which map to Vietnamese food names. Here are some examples:
+
+- Class 0: Bánh mì
+- Class 1: Phở
+- Class 2: Bún chả
+- Class 3: Cơm tấm
+- Class 4: Bánh xèo
+
+See the full mapping in the service documentation. 

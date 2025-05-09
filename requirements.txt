@@ -3,3 +3,5 @@ uvicorn
 pillow
 numpy
 ultralytics
+httpx
+pydantic
